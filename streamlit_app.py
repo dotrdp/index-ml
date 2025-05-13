@@ -82,7 +82,7 @@ with st.form("add_ticket_form"):
 
 if submitted:
     raw = get_image_details_for_class(clase, Path("data/Annotations"))
-    images = [{"src": "https://verbose-space-bassoon-4966prg4j5v276rp-8000.app.github.dev/"+x["image_filename"]} for x in raw][:30]
+    images = [{"src": "https://verbose-space-bassoon-4966prg4j5v276rp-8000.app.github.dev/"+x["image_filename"]} for x in raw][:10]
     selected = streamlit_imagegrid.streamlit_imagegrid("visualization1", images, 4, key='foo')
 
 # Display the selected item
