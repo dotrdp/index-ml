@@ -5,6 +5,9 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit_imagegrid 
+from utils import get_image_details_for_class
+from pathlib import Path
 
 # Show app title and description.
 st.set_page_config(page_title="Support tickets", page_icon="🎫")
@@ -71,32 +74,23 @@ st.header("Add a ticket")
 # We're adding tickets via an `st.form` and some input widgets. If widgets are used
 # in a form, the app will only rerun once the submit button is pressed.
 with st.form("add_ticket_form"):
-    issue = st.text_area("Describe the issue")
-    priority = st.selectbox("Priority", ["High", "Medium", "Low"])
+    with open("data/labels.txt", "r") as f:
+        classes = f.read()
+    issue = st.text_area("Que buscas?")
+    clase = st.selectbox("Clase", classes.split("\n"))
     submitted = st.form_submit_button("Submit")
 
 if submitted:
-    # Make a dataframe for the new ticket and append it to the dataframe in session
-    # state.
-    recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1])
-    today = datetime.datetime.now().strftime("%m-%d-%Y")
-    df_new = pd.DataFrame(
-        [
-            {
-                "ID": f"TICKET-{recent_ticket_number+1}",
-                "Issue": issue,
-                "Status": "Open",
-                "Priority": priority,
-                "Date Submitted": today,
-            }
-        ]
-    )
+    raw = get_image_details_for_class(clase, Path("data/Annotations"))
+    images = [{"src": "https://verbose-space-bassoon-4966prg4j5v276rp-8000.app.github.dev/"+x["image_filename"]} for x in raw][:30]
+    selected = streamlit_imagegrid.streamlit_imagegrid("visualization1", images, 4, key='foo')
+
+# Display the selected item
+    st.write(f"Selected item: {selected}")
 
     # Show a little success message.
     st.write("Ticket submitted! Here are the ticket details:")
-    st.dataframe(df_new, use_container_width=True, hide_index=True)
-    st.session_state.df = pd.concat([df_new, st.session_state.df], axis=0)
-
+   
 # Show section to view and edit existing tickets in a table.
 st.header("Existing tickets")
 st.write(f"Number of tickets: `{len(st.session_state.df)}`")
