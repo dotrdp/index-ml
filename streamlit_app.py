@@ -8,15 +8,18 @@ import streamlit as st
 import streamlit_imagegrid 
 from utils import get_image_details_for_class
 from pathlib import Path
+from PIL import Image
 
+import requests
+from io import BytesIO
 # Show app title and description.
-st.set_page_config(page_title="Support tickets", page_icon="🎫")
-st.title("🎫 Support tickets")
+st.set_page_config(page_title="Index-ML", page_icon="🤖")
+st.title("🤖 Index-ML")
 st.write(
     """
-    This app shows how you can build an internal tool in Streamlit. Here, we are 
-    implementing a support ticket workflow. The user can create a ticket, edit 
-    existing tickets, and view some statistics.
+    Esta aplicación te permite realizar busquedas inteligentes de imágenes en un conjunto de datos.
+    Además de la implementación de inteligencia artificial para el análisis de datos con agentes 
+    de seguridad artificiales.
     """
 )
 
@@ -69,29 +72,36 @@ if "df" not in st.session_state:
 
 
 # Show a section to add a new ticket.
-st.header("Add a ticket")
+st.header("busqueda")
 
 # We're adding tickets via an `st.form` and some input widgets. If widgets are used
 # in a form, the app will only rerun once the submit button is pressed.
 with st.form("add_ticket_form"):
     with open("data/labels.txt", "r") as f:
         classes = f.read()
-    issue = st.text_area("Que buscas?")
-    clase = st.selectbox("Clase", classes.split("\n"))
+    issue = st.text_area("¿Qué buscas?")
+    clase = st.multiselect("Clase", classes.split("\n"), placeholder="Selecciona una clase")
+    inclusivo = st.toggle("Incluye todos", value=True)
     submitted = st.form_submit_button("Submit")
-
 if submitted:
-    raw = get_image_details_for_class(clase, Path("data/Annotations"))
-    images = [{"src": "https://verbose-space-bassoon-4966prg4j5v276rp-8000.app.github.dev/"+x["image_filename"]} for x in raw][:10]
-    selected = streamlit_imagegrid.streamlit_imagegrid("visualization1", images, 4, key='foo')
+    if issue:
+        st.write(f"Buscando: `{issue}`")
 
-# Display the selected item
+    raw = get_image_details_for_class(clase, Path("data/Annotations"), inclusivo)
+    images = [{"src": "http://[::]:8000/"+x["image_filename"]} for x in raw][:10]
+    selected = streamlit_imagegrid.streamlit_imagegrid("visualization1", images, 4, key='imag')
     st.write(f"Selected item: {selected}")
-
     # Show a little success message.
-    st.write("Ticket submitted! Here are the ticket details:")
-   
+if st.session_state.get("imag") is not None:
+    imag = st.session_state.imag
+    imag = imag.replace('{"src":', "")
+    imag = imag.replace("}", "")
+    imag = imag.replace('"', "")
+    res = requests.get(imag)
+    img = Image.open(BytesIO(res.content))
+    st.write(img)
 # Show section to view and edit existing tickets in a table.
+a="""
 st.header("Existing tickets")
 st.write(f"Number of tickets: `{len(st.session_state.df)}`")
 
@@ -164,3 +174,4 @@ priority_plot = (
     )
 )
 st.altair_chart(priority_plot, use_container_width=True, theme="streamlit")
+"""

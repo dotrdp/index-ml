@@ -71,7 +71,7 @@ def parse_voc_annotation(xml_file_path: Path):
 
 
 
-def get_image_details_for_class(selected_class: str, annotations_folder_path: Path):
+def get_image_details_for_class(selected_class:list, annotations_folder_path: Path, inclusivo:bool):
     """
     Finds all images and their specific bounding boxes for a given class.
     Args:
@@ -93,9 +93,21 @@ def get_image_details_for_class(selected_class: str, annotations_folder_path: Pa
         annotation_data = parse_voc_annotation(xml_file_path)
         if annotation_data and annotation_data.get('filename'):
             specific_bboxes_for_class = []
-            for obj in annotation_data.get('objects', []):
-                if obj.get('name') == selected_class:
-                    specific_bboxes_for_class.append(obj['bbox'])
+            if inclusivo==False:
+                for clase in selected_class:
+                    for obj in annotation_data.get('objects', []):
+                        if obj.get('name') == clase:
+                            specific_bboxes_for_class.append(obj['bbox'])
+            else:
+                objets =[]
+                for obj in annotation_data.get('objects', []):
+                    objets.append([obj['name'], obj['bbox']])
+                if set([x[0] for x in objets])==set(selected_class):
+                   for obj in objets:
+                       specific_bboxes_for_class.append(obj[1])
+
+                    
+
             
             if specific_bboxes_for_class: # Only add if the selected class was found in this image
                 images_for_class.append({
